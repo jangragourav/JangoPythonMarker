@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel='stylesheet' href="lib/css/annotator.css">
+<link rel='stylesheet' href="lib/css/select2.min.css">
+<script type="text/javascript" src="lib/vendor/jquery.js"></script>
+<script>
+    localStorage.clear();
+</script>
+<script type="text/javascript" src="lib/vendor/underscore.js"></script>
+<script type="text/javascript" src="lib/vendor/backbone.js"></script>
+<script type="text/javascript" src="lib/vendor/select2.min.js" ></script>
+<script type="text/javascript" src="lib/javascript/utilities/utils.js" ></script>
+<script type="text/javascript" src="lib/javascript/annotator/annotator-full.min.js" ></script>
+<script type="text/javascript" src="lib/javascript/annotator-plugins/annotator.plugin.categories.js" ></script>
+<script type="text/javascript" src="lib/javascript/annotator-plugins/annotator.plugin.events.js" ></script>
+<script type="text/javascript" src="lib/javascript/annotator-plugins/annotator.store.js" ></script>
+<script type="text/javascript" src="src/app.js" ></script>
+<link rel="stylesheet" type="text/css" href="lib/css/styles.css">
+
+<style>
+body {font-family: Arial, Helvetica, sans-serif;margin:auto;max-width:500px;}
+form {border: 3px solid rgb(0,150,136);border-radius:5px;top:50%;}
+
+input[type=text] {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: rgb(0,150,136);
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius:5px;
+    cursor: pointer;
+    width: 100%;
+    font-weight:bold;
+    font-family:roboto;
+    font-size: 20px;
+}
+
+button:hover{
+    opacity: 0.8;
+}
+
+
+
+
+.container {
+    padding: 16px;
+    max-width:500px;
+    margin: auto;
+}
+
+</style>
+<script type="text/javascript">
+    $(document).ready(function(){
+       
+        $("button").click(function(){
+         var username=$('#uname').val();
+         var keyRole=$('#keyRole').val();
+        var url="http://192.168.3.12:8003/user/status/"+username+"/"+keyRole;
+            $.get(url, function(data, status){
+                console.log("success", data, status, data.auth === true);
+                if(data.auth === true){
+                    localStorage.setItem('userName', username);
+                    window.location.href="http://192.168.3.12/html/annotator.html";
+                    //window.location.href="http://localhost:8080/html/annotator.html";
+                }
+            });
+         
+         });
+        });
+</script>
+
+</head>
+<body>
+
+<h1 style="text-align:center;color:#05793e;font-family:roboto;font-size:40px;">ANNOTATOR</h1>
+ <form>
+  <div class="container">
+    <label for="uname"><b>User</b></label>
+    <input id="uname" type="text" placeholder="Enter Username" name="uname" value="" required>
+
+    <label for="keyrole"><b>OTP</b></label>
+    <input id="keyRole" type="text" placeholder="Enter Key Role" name="keyrole" value="" required>
+    <strong style="color:red;">NOTE : </strong><p style="display: inline;font-size: 12px;">In case of, any issues please call admin</p>
+    <button type="button">LOGIN</button>    
+  </div>
+</form>
+  
+<div>
+<p>We really appreciate your efforts for helping us for annotating the data for the model training!</p>
+</div>
+
+
+</body>
+</html>

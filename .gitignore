@@ -1,0 +1,8 @@
+.idea
+*.iml
+out
+gen
+.idea/
+.vscode
+node_modules/
+.atom

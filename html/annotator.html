@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<link rel='stylesheet' href="/lib/css/annotator.css">
+<link rel='stylesheet' href="/lib/css/select2.min.css">
+<script type="text/javascript" src="/lib/vendor/jquery.js"></script>
+    <script>
+        if(!localStorage.getItem('userName') || localStorage.getItem('userName') == null || localStorage.getItem('userName') == ""){
+            window.location.href = 'http://192.168.3.12/'
+        }
+    </script>
+<script type="text/javascript" src="/lib/vendor/underscore.js"></script>
+<script type="text/javascript" src="/lib/vendor/backbone.js"></script>
+<script type="text/javascript" src="/lib/vendor/select2.min.js" ></script>
+<script type="text/javascript" src="/lib/javascript/utilities/utils.js" ></script>
+<script type="text/javascript" src="/lib/javascript/annotator/annotator-full.min.js" ></script>
+<script type="text/javascript" src="/lib/javascript/annotator-plugins/annotator.plugin.categories.js" ></script>
+<script type="text/javascript" src="/lib/javascript/annotator-plugins/annotator.plugin.events.js" ></script>
+<script type="text/javascript" src="/lib/javascript/annotator-plugins/annotator.store.js" ></script>
+<script type="text/javascript" src="/src/app.js" ></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<link rel="stylesheet" type="text/css" href="/lib/css/styles.css">
+<script type="text/javascript">
+    var startLoader = function (){
+        document.getElementById("loader").style.display = "block";
+        document.getElementById("main").style.display = "none";
+    };
+
+    var  stopLoader = function (){
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("main").style.display = "block";
+    };
+</script>
+</head>
+<body>
+<div id="loader"></div>
+<div id="main" style="display:none;" class="rounded animate-bottom" >
+    <div><b>Select any text below to create annotations.</b></div>
+    <div class="left scrollable browser-height" id="annotatorjs">
+        <p style="margin: 25px;"></p>
+    </div>
+    <div class="right scrollable browser-height" id="annotations-list-block">
+    <div id="annotations-list-title"><b>Annotations</b></div>
+    <div id="annotations-list-view"></div>
+    </div>
+
+<script type="text/template" id="annotation-list-title-template">
+    <div>
+        <span>Annotations</span><span id='total-count'></span>
+        <button id='all'>All - <%= total %></button>
+        <button id='done-annotated'>Done - <%= done %></button>
+        <button id='not-annotated'>Remainings - <%= remaining %></button>
+        <footer style="display:inline;">
+            <div class="btn-group" id="rbutton">
+                <button id="prev" type="button" disabled class="btn btn-primary" onclick = "do_prev()">Previous</button>
+                <button id="verify" type="button" disabled class="btn btn-primary" onclick = "do_verify()">Validate</button>
+                <button id="next" type="button" disabled class="btn btn-primary" onclick = "do_next()">Next</button>
+            </div> 
+        </footer>
+    </div>
+</script>
+
+<script type="text/template" id="annotation-category-no-items-template">
+    <div class="annotation-category-not-done row1">
+        <%= categoryName %> <small>Not annotated yet</small>
+    </div>
+</script>
+<script type="text/template" id="annotation-category-with-items-template">
+    <div class="annotation-category-done">
+        <%= categoryName %> [<%= categoryItemsCount %>]
+        <ul id="<%= elemId %>"></ul>
+    </div>
+</script>
+<script type="text/template" id="annotation-item-view-template">
+    <div>
+        <span class="quote"><%= quote %></span>
+        <span class="text"><%= text %></span>
+    </div>
+</script>
+<script type="text/javascript">
+    var annotationCategories = new AnnotationCategories();
+    annotationCategories.url = '/data/categories.json';
+    annotationCategories.fetch({reset: true});
+    var annotationCollection = new AnnotationCollection();
+    var annotatorjsView = new AnnotatorjsView({
+        el: "#annotatorjs",
+        collection: annotationCollection,
+        annotationCategories: annotationCategories
+    }).render();
+    var annotationsListView = new AnnotationsListView({
+        el: "#annotations-list-view",
+        collection: annotationCollection,
+        annotationCategories: annotationCategories
+    }).render();
+    var annotationsTitleView = new AnnotationsTitleView({
+        el: "#annotations-list-title",
+        collection: annotationCollection,
+        annotationCategories: annotationCategories
+    }).render();
+
+    var do_next = function(){
+        startLoader();
+        var resumeOrder = JSON.parse(localStorage.getItem('resumeOrder'));
+        var currentResumeId = localStorage.getItem('currentResumeId');
+        if(currentResumeId === resumeOrder[resumeOrder.length-1]){
+            singleton_store.loadAnnotations("next");
+        }else{
+            var nextIndex = resumeOrder.indexOf(currentResumeId)+1;
+            if( nextIndex < resumeOrder.length){
+                var nextResumeId = resumeOrder[nextIndex];
+                singleton_store.loadAnnotations(nextResumeId);
+            }
+        }
+        if (resumeOrder.indexOf(currentResumeId) > 0) {
+            $("#prev").prop('disabled', false);
+          } else {
+            $("#prev").prop('disabled', true);
+          }
+        setTimeout(function(){ window.location.reload(); }, 150);
+    };
+    var do_prev = function(){
+        startLoader()
+        var resumeOrder = JSON.parse(localStorage.getItem('resumeOrder'));
+        var currentResumeId = localStorage.getItem('currentResumeId');
+        var currentIndex = resumeOrder.indexOf(currentResumeId);
+        var nextResumeId;
+        if((currentIndex-1) > -1 ){
+            nextResumeId = resumeOrder[currentIndex-1];
+            if(currentIndex === 1){
+                $("#prev").prop('disabled', true);
+            }
+        }         
+        singleton_store.loadAnnotations(nextResumeId);
+        setTimeout(function(){ window.location.reload(); }, 150);
+    };
+    var do_verify = function (){
+        startLoader();
+        var currentResumeId = localStorage.getItem('currentResumeId');
+        if(!currentResumeId){
+            alert("Don't eat your cookies. Let us do for you.");
+            //window.location.href = 'http://localhost:8080/';
+            window.location.href = 'http://192.168.3.12/';
+            return;
+        }
+        var resumeVerifyUrl = 'http://192.168.3.12/profile/verify/' + currentResumeId;
+        var username = localStorage.getItem('userName');
+        $.ajax({
+            url: resumeVerifyUrl,
+            type: 'PUT',
+            headers: {
+                "username": username,
+                "content-type": 'application/json'
+            },
+            dataType: 'json',
+            success: function () {
+                var resumeOrder = JSON.parse(localStorage.getItem('resumeOrder'));
+                var index = resumeOrder.indexOf(currentResumeId);
+                resumeOrder.splice(index, 1);
+                localStorage.setItem('resumeOrder', JSON.stringify(resumeOrder));
+                if(index <= resumeOrder.length){
+                    currentResumeId = resumeOrder[index];
+                    localStorage.setItem('currentResumeId', currentResumeId);
+                    singleton_store.loadAnnotations(currentResumeId);
+                } else {
+                    singleton_store.loadAnnotations("next");
+                }
+            setTimeout(function(){ window.location.reload(); }, 150);
+            }
+        });
+    }
+    setTimeout(function(){ stopLoader(); }, 500);
+</script>
+</body>
+</html>
